@@ -1,0 +1,24 @@
+FROM python:3.4-alpine
+MAINTAINER Janek Lasocki-Biczysko <janek.lb@gmail.com>
+
+RUN apk update && apk add openjdk8-jre curl bash
+
+ENV SPARK_VERSION 2.2.1
+ENV SPARK_PACKAGE spark-$SPARK_VERSION-bin-hadoop2.7
+ENV SPARK_HOME /usr/local/spark
+RUN curl -sL --retry 3 \
+    "http://archive.apache.org/dist/spark/spark-$SPARK_VERSION/$SPARK_PACKAGE.tgz" \
+    | gunzip \
+    | tar x -C /tmp/ \
+ && mv /tmp/$SPARK_PACKAGE $SPARK_HOME \
+ && rm -rf $SPARK_HOME/examples
+
+RUN cp $SPARK_HOME/conf/log4j.properties.template $SPARK_HOME/conf/log4j.properties \
+&& echo "log4j.rootCategory=ERROR, console" >> $SPARK_HOME/conf/log4j.properties \
+&& cp $SPARK_HOME/conf/spark-defaults.conf.template $SPARK_HOME/conf/spark-defaults.conf \
+&& echo "spark.ui.showConsoleProgress false" >> $SPARK_HOME/conf/spark-defaults.conf
+
+ENV PATH $PATH:$SPARK_HOME/bin
+ENV PYTHONPATH $SPARK_HOME/python
+ENV PYSPARK_PYTHON /usr/local/bin/python3.4
+
